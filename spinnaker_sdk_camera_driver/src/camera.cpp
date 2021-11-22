@@ -49,6 +49,14 @@ ImagePtr acquisition::Camera::grab_frame() {
         } else {
 
             timestamp_ = pResultImage->GetTimeStamp();
+            const ChunkData& chuckdata = pResultImage->GetChunkData();
+            currentExposure_ = chuckdata.GetExposureTime();
+            currentGain_ = chuckdata.GetGain();
+            if(currentExposure_==0 & currentGain_==0){
+                std::cout << "Current exposure: "<<currentExposure_ << " us, Current gain: "<<currentGain_<<" dB"<<std::endl;
+                std::cout << "This probably means that chunk data control is not enabled !"<< std::endl;
+            }
+            
 
             if (frameID_ >= 0) {
                 lastFrameID_ = frameID_;
@@ -78,6 +86,17 @@ string acquisition::Camera::get_time_stamp() {
     ss<<timestamp_*1000;
     return ss.str();
 
+}
+
+// Returns last gain
+float64_t acquisition::Camera::get_gain(){
+    return currentGain_;
+}
+
+
+// Returns last exposure time
+float64_t acquisition::Camera::get_exposure_time(){
+    return currentExposure_;
 }
 
 int acquisition::Camera::get_frame_id() {
@@ -179,14 +198,14 @@ void acquisition::Camera::setIntValue(string setting, int val) {
 void acquisition::Camera::setFloatValue(string setting, float val) {
 
     INodeMap & nodeMap = pCam_->GetNodeMap();
-    
     CFloatPtr ptr = nodeMap.GetNode(setting.c_str());
-    if (!IsAvailable(ptr) || !IsWritable(ptr)) {
-        ROS_FATAL_STREAM("Unable to set " << setting << " to " << val << " (ptr retrieval). Aborting...");
-    }
+
+    // if (!IsAvailable(ptr) || !IsWritable(ptr)) {
+    //     ROS_FATAL_STREAM("Unable to set " << setting << " to " << val << " (ptr retrieval). Aborting...");
+    // }
     ptr->SetValue(val);
 
-    ROS_DEBUG_STREAM(setting << " set to " << val);
+    // ROS_DEBUG_STREAM(setting << " set to " << val);
     
 }
 
@@ -356,8 +375,39 @@ void acquisition::Camera::exposureTest() {
     }
     float expTime=ptrExpTest->GetValue();
     ROS_DEBUG_STREAM("Exposure Time: "<<expTime<<endl);
-
 }
+
+int acquisition::Camera::getExposure() {
+    // warning: this only returns the last value set using the API. Use chunk data instead for value associated to image.
+    return pCam_->ExposureTime.GetValue();
+    // CFloatPtr ptrExpTest=pCam_->GetNodeMap().GetNode("ExposureTime");
+    // if (!IsAvailable(ptrExpTest) || !IsReadable(ptrExpTest)){
+    //     ROS_FATAL_STREAM("Unable to get exposure " << "). Aborting..." << endl << endl);
+    //     return -1;
+    // }
+    // else{
+    //     float expTime=ptrExpTest->GetValue();
+    //     // ROS_DEBUG_STREAM("Exposure Time: "<<expTime<<endl);
+    //     return expTime;
+    // }
+}
+
+double acquisition::Camera::getGain() {
+    // CFloatPtr ptrExpTest=pCam_->GetNodeMap().GetNode("Gain");
+    // if (!IsAvailable(ptrExpTest) || !IsReadable(ptrExpTest)){
+    //     ROS_FATAL_STREAM("Unable to get gain " << "). Aborting..." << endl << endl);
+    //     return -1;
+    // }
+    // else{
+    //     float gain=ptrExpTest->GetValue();
+    //     // ROS_DEBUG_STREAM("Gain: "<<gain<<endl);
+    //     return gain;
+    // }
+    
+    // warning: this only returns the last gain value set using the API. Use chunk data instead for value associated to image.
+    return pCam_->Gain.GetValue();
+}
+
 bool acquisition::Camera::verifyBinning(int binningDesired) {
     int actualBinningX =  (pCam_ ->SensorWidth())/(pCam_ ->Width());
     int actualBinningY =  (pCam_ ->SensorHeight())/(pCam_ ->Height());

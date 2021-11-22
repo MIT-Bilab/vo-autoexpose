@@ -30,6 +30,8 @@ namespace acquisition {
         Mat grab_mat_frame();
         string get_time_stamp();
         int get_frame_id();
+        float64_t get_gain();
+        float64_t get_exposure_time();
 
         void setEnumValue(string, string);
         void setIntValue(string, int);
@@ -59,6 +61,9 @@ namespace acquisition {
         // void setTrigMode();
         // void setTriggerOverlapOff();
 
+        double getGain();
+        int    getExposure();
+
         string getTLNodeStringValue(string node_string);
         double getFloatValueMax(string node_string);
         string get_id();
@@ -66,6 +71,7 @@ namespace acquisition {
         bool is_master() { return MASTER_; }
         void set_color(bool flag) { COLOR_ = flag; }
         void setGetNextImageTimeout(uint64_t get_next_image_timeout) { GET_NEXT_IMAGE_TIMEOUT_ = get_next_image_timeout; }
+        void enableChunk();
         bool verifyBinning(int binningDesired);
         void calibrationParamsTest(int calibrationWidth, int calibrationHeight);
         
@@ -77,6 +83,8 @@ namespace acquisition {
         int64_t timestamp_;
         int frameID_;
         int lastFrameID_;
+        float64_t currentExposure_;
+        float64_t currentGain_;
 
         bool COLOR_;
         bool MASTER_;
