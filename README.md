@@ -44,7 +44,7 @@ Download and install instructions can be found at: http://eigen.tuxfamily.org. *
 ## ROS 
 The algorithm was tested with ROS Melodic. Follow download and installation instructions at: http://wiki.ros.org/melodic.
 
-## Camera driver
+## Camera drivers
 The ROS wrapper for the auto-exposure algorithm included in this repo assumes that you are using a Pt Grey (FLIR) camera supported by the Spinnaker SDK. If you are using another camera, you should only need to update the "send_params" and "image_cb" callback functions in "vo_autoexpose_node.cpp" to send the acquisition parameters to the camera and to pull new frames.
 
 Download and installation instructions for the Spinnaker SDK can be found at: https://www.flir.com/support-center/iis/machine-vision/application-note/using-spinnaker-on-arm-and-embedded-systems/.
