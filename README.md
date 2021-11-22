@@ -30,7 +30,7 @@ If you use this code in an academic work, please cite:
      }
 
 # 2. Prerequisites
-The library was testing in **Ubuntu 18.04**. 
+The library was tested in **Ubuntu 18.04**. 
 
 <!-- ## C++11 or C++0x Compiler
 We use the new thread and chrono functionalities of C++11. -->
