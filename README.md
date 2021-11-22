@@ -36,7 +36,7 @@ The library was tested in **Ubuntu 18.04**.
 We use the new thread and chrono functionalities of C++11. -->
 
 ## OpenCV
-Dowload and installation instructions can be found at: http://opencv.org. **Required at leat 3.0. Tested with OpenCV 3.2.0 and 4.4.0**.
+Dowload and installation instructions can be found at: http://opencv.org. **Requires at least 3.2.0 (default with ROS melodic installation)**.
 
 ## Eigen3
 Download and install instructions can be found at: http://eigen.tuxfamily.org. **Required at least 3.1.0**.
