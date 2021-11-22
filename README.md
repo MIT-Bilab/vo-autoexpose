@@ -18,7 +18,7 @@ alt="ORB-SLAM3" width="240" height="180" border="10" /></a> -->
 
 # 1. License
 
-vo-autoexpose is released under [MIT license](https://github.com/UZ-SLAMLab/ORB_SLAM3/LICENSE). 
+vo-autoexpose is released under [MIT license](https://github.com/MIT-Bilab/vo-autoexpose/blob/main/LICENSE). 
 
 If you use this code in an academic work, please cite:
 
