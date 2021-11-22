@@ -1,0 +1,46 @@
+$ cat .gitignore
+*.[oa]
+*~
+
+include/spinnaker_sdk_camera_driver/spinnaker_configure.h
+
+# no .a files
+#*.a
+
+# but do track lib.a, even though you're ignoring .a files above
+#!lib.a
+
+# only ignore the TODO file in the current directory, not subdir/TODO
+#/TODO
+
+# ignore all files in the build/ directory
+build/
+data/
+devel
+~devel/lib/datacollection_neu/*.xml
+.catkin_workspace
+include/spinnaker_sdk_camera_driver/spinnaker_configure.h
+
+# ignore doc/notes.txt, but not doc/server/arch.txt
+#doc/*.txt
+
+# ignore all .pdf files in the doc/ directory
+#doc/**/*.pdf
+
+# ignore all bag files
+*.bag
+
+# ignore pcd files
+*.pcd
+
+# ignore ply files
+*.ply
+
+# ignore mat files
+*.mat
+
+# ignore png files
+*.png
+
+# ignore avi
+*.avi
