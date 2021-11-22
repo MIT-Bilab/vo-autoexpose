@@ -53,6 +53,9 @@ cd catkin_rep/src
 Clone the repository:
 ```
 git clone https://github.com/MIT-Bilab/vo-autoexpose vo_autoexpose
+```
+Build:
+```
 cd ..
 catkin build
 ```
