@@ -47,7 +47,7 @@ The algorithm was tested with ROS Melodic. Follow download and installation inst
 ## Camera driver
 The ROS wrapper for the auto-exposure algorithm included in this repo assumes that you are using a Pt Grey (FLIR) camera supported by the Spinnaker SDK. If you are using another camera, you should only need to update the "send_params" and "image_cb" callback functions in "vo_autoexpose_node.cpp" to send the acquisition parameters to the camera and to pull new frames.
 
-Download and installation instructions for the Spinnaker SDK can be found at: https://www.flir.com/support-center/iis/machine-vision/downloads/spinnaker-sdk-and-firmware-download/.
+Download and installation instructions for the Spinnaker SDK can be found at: https://www.flir.com/support-center/iis/machine-vision/application-note/using-spinnaker-on-arm-and-embedded-systems/.
 
 This repository includes a ROS package with wrappers for the Spinnaker SDK which was forked from the [spinnaker_sdk_camera_driver](https://github.com/neufieldrobotics/spinnaker_sdk_camera_driver) repository. It was modified to support real-time alterations to the camera exposure gain and to publish ROS messages containing the exposure time and gain of each captured frame. If you are using your own camera drivers, you can safely delete the whole folder named "spinnaker_sdk_camera_driver" to avoid building the package.
 
