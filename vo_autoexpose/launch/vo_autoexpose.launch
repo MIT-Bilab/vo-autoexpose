@@ -1,0 +1,9 @@
+<launch>
+    <node pkg="vo_autoexpose" type="vo_autoexpose_node" name="vo_autoexpose" output="screen">
+        <remap from="/image_raw" to="/camera_array/left/image_raw"/>
+        <remap from="/image_params" to="/camera_array/left/params"/>
+        <remap from="/imu" to="/gx5/imu/data"/>
+        <remap from="/params_cmd" to="/camera_array/left/params_cmd"/>
+        <param name="service_call" type="str" value="/acquisition_node/set_parameters"/>
+    </node>
+</launch>

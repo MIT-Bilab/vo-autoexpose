@@ -1,0 +1,9 @@
+<launch>
+    <node pkg="vo_autoexpose" type="vo_autoexpose_stereo_node" name="vo_autoexpose_stereo" output="screen">
+        <remap from="/left/image_raw" to="/camera_array/left/image_raw"/>
+        <remap from="/right/image_raw" to="/camera_array/right/image_raw"/>
+        <remap from="/left/image_params" to="/camera_array/left/params"/>
+        <remap from="/imu" to="/gx5/imu/data"/>
+        <param name="service_call" type="str" value="/acquisition_node/set_parameters"/>
+    </node>
+</launch>
