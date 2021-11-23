@@ -20,7 +20,7 @@ find_package(Boost REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES mba_aeg
+  LIBRARIES vo_autoexpose
   CATKIN_DEPENDS roscpp rospy std_msgs message_filters spinnaker_sdk_camera_driver cv_bridge dynamic_reconfigure
 )
 
