@@ -10,11 +10,13 @@
 //ROS
 #include "std_msgs/Float64.h"
 #include "std_msgs/String.h"
+#include "std_msgs/Int32.h"
 //Dynamic reconfigure
 #include <dynamic_reconfigure/server.h>
 #include <spinnaker_sdk_camera_driver/spinnaker_camConfig.h>
 
 #include "spinnaker_sdk_camera_driver/SpinnakerImageNames.h"
+#include "spinnaker_sdk_camera_driver/SpinnakerImageParams.h"
 
 #include <sstream>
 #include <image_transport/image_transport.h>
@@ -77,6 +79,7 @@ namespace acquisition {
         void update_grid();
         void export_to_ROS();
         void dynamicReconfigureCallback(spinnaker_sdk_camera_driver::spinnaker_camConfig &config, uint32_t level);
+        void commandParamsCallback(const spinnaker_sdk_camera_driver::SpinnakerImageParams::ConstPtr& msg);
        
         float mem_usage();
     
@@ -178,12 +181,15 @@ namespace acquisition {
         ros::Publisher acquisition_pub;
         //vector<ros::Publisher> camera_image_pubs;
         vector<image_transport::CameraPublisher> camera_image_pubs;
+        vector<ros::Publisher> image_params_pubs; // acquisition parameters associated to each image
+        ros::Subscriber image_params_cmd_sub; // commanded image parameters
         //vector<ros::Publisher> camera_info_pubs;
 
 		
         vector<sensor_msgs::ImagePtr> img_msgs;
         vector<sensor_msgs::CameraInfoPtr> cam_info_msgs;
         spinnaker_sdk_camera_driver::SpinnakerImageNames mesg;
+        vector<spinnaker_sdk_camera_driver::SpinnakerImageParams> params_msgs;
         boost::mutex queue_mutex_;  
     };
 

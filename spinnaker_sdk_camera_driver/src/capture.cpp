@@ -4,6 +4,55 @@
 
 PLUGINLIB_EXPORT_CLASS(acquisition::Capture, nodelet::Nodelet)
 
+//-----------------------------------------------------------------------------
+// Format current time (calculated as an offset in current day) in this form:
+//
+//     "hh:mm:ss.SSS" (where "SSS" are milliseconds)
+//-----------------------------------------------------------------------------
+std::string now_str()
+{
+    // Get current time from the clock, using microseconds resolution
+    const boost::posix_time::ptime now = 
+        boost::posix_time::microsec_clock::local_time();
+
+    // Get the time offset in current day
+    const boost::posix_time::time_duration td = now.time_of_day();
+
+    //
+    // Extract hours, minutes, seconds and milliseconds.
+    //
+    // Since there is no direct accessor ".milliseconds()",
+    // milliseconds are computed _by difference_ between total milliseconds
+    // (for which there is an accessor), and the hours/minutes/seconds
+    // values previously fetched.
+    //
+    const long hours        = td.hours();
+    const long minutes      = td.minutes();
+    const long seconds      = td.seconds();
+    const long milliseconds = td.total_milliseconds() -
+                              ((hours * 3600 + minutes * 60 + seconds) * 1000);
+
+    //
+    // Format like this:
+    //
+    //      hh:mm:ss.SSS
+    //
+    // e.g. 02:15:40:321
+    //
+    //      ^          ^
+    //      |          |
+    //      123456789*12
+    //      ---------10-     --> 12 chars + \0 --> 13 chars should suffice
+    //  
+    // 
+    char buf[40];
+    sprintf(buf, "%02ld:%02ld:%02ld.%03ld", 
+        hours, minutes, seconds, milliseconds);
+
+    return buf;
+}
+
+
 acquisition::Capture::~Capture(){
 
     // destructor
@@ -151,7 +200,7 @@ void acquisition::Capture::init_variables_register_to_ros() {
 
     //initializing the ros publisher
     acquisition_pub = nh_.advertise<spinnaker_sdk_camera_driver::SpinnakerImageNames>("camera", 1000);
-
+    
     #ifdef trigger_msgs_FOUND
     // initiliazing the trigger subscriber
         if (EXTERNAL_TRIGGER_){
@@ -164,13 +213,14 @@ void acquisition::Capture::init_variables_register_to_ros() {
         }
     #endif
     
-    //dynamic reconfigure
+    //dynamic reconfigure --> useful for using rqt tools to manually set params
     dynamicReCfgServer_ = new dynamic_reconfigure::Server<spinnaker_sdk_camera_driver::spinnaker_camConfig>(nh_pvt_);
-    
     dynamic_reconfigure::Server<spinnaker_sdk_camera_driver::spinnaker_camConfig>::CallbackType dynamicReCfgServerCB_t;   
-
     dynamicReCfgServerCB_t = boost::bind(&acquisition::Capture::dynamicReconfigureCallback,this, _1, _2);
     dynamicReCfgServer_->setCallback(dynamicReCfgServerCB_t);
+
+    // for nonblocking calls, publish instead to params_cmd topic
+    image_params_cmd_sub = nh_.subscribe("camera_array/"+cam_names_[0]+"/params_cmd",1,&acquisition::Capture::commandParamsCallback, this); 
 
 }
 void acquisition::Capture::load_cameras() {
@@ -194,7 +244,7 @@ void acquisition::Capture::load_cameras() {
     bool master_set = false;
     int cam_counter = 0;
     
-    for (int j=0; j<cam_ids_.size(); j++) {
+        for (int j=0; j<cam_ids_.size(); j++) {
         bool current_cam_found=false;
         for (int i=0; i<numCameras_; i++) {
         
@@ -221,10 +271,11 @@ void acquisition::Capture::load_cameras() {
                 cams.push_back(cam);
                 
                 camera_image_pubs.push_back(it_->advertiseCamera("camera_array/"+cam_names_[j]+"/image_raw", 1));
-                //camera_info_pubs.push_back(nh_.advertise<sensor_msgs::CameraInfo>("camera_array/"+cam_names_[j]+"/camera_info", 1));
+                image_params_pubs.push_back(nh_.advertise<spinnaker_sdk_camera_driver::SpinnakerImageParams>("camera_array/"+cam_names_[j]+"/params",1000));
 
                 img_msgs.push_back(sensor_msgs::ImagePtr());
 
+                params_msgs.push_back(spinnaker_sdk_camera_driver::SpinnakerImageParams());
                 sensor_msgs::CameraInfoPtr ci_msg(new sensor_msgs::CameraInfo());
 
                 //int image_width = 0;
@@ -241,8 +292,8 @@ void acquisition::Capture::load_cameras() {
                 // distortion
                 ci_msg->distortion_model = distortion_model;
                 // binning
-                ci_msg->binning_x = binning_;
-                ci_msg->binning_y = binning_;
+                ci_msg->binning_x = 1; // binning_;
+                ci_msg->binning_y = 1; // binning_;
                 
                 if (region_of_interest_set_ && (region_of_interest_width_!=0 || region_of_interest_height_!=0)){
                     ci_msg->roi.do_rectify = true;
@@ -771,11 +822,13 @@ void acquisition::Capture::init_cameras(bool soft = false) {
 
 void acquisition::Capture::start_acquisition() {
 
-    for (int i = numCameras_-1; i>=0; i--)
-        cams[i].begin_acquisition();
-
-    // for (int i=0; i<numCameras_; i++)
+    // Start cameras starting with last (assuming first is master)
+    // for (int i = numCameras_-1; i>=0; i--)
     //     cams[i].begin_acquisition();
+
+    // Start cameras starting with first (assuming using external trigger)
+    for (int i=0; i<numCameras_; i++)
+        cams[i].begin_acquisition();
     
 }
 
@@ -893,7 +946,8 @@ void acquisition::Capture::export_to_ROS() {
     else frame_id_prefix="";
 
     for (unsigned int i = 0; i < numCameras_; i++) {
-        img_msg_header.frame_id = frame_id_prefix + "cam_"+to_string(i)+"_optical_frame";
+        // img_msg_header.frame_id = frame_id_prefix + "cam_"+to_string(i)+"_optical_frame";
+        img_msg_header.frame_id = frame_id_prefix + "cam_left_gt"; // image processing stereo pipeline requires both images to have same frame.
         cam_info_msgs[i]->header = img_msg_header;
 
         if(color_)
@@ -903,7 +957,12 @@ void acquisition::Capture::export_to_ROS() {
 
         camera_image_pubs[i].publish(img_msgs[i],cam_info_msgs[i]);
 
+        // Also publish params
+        params_msgs[i].header.stamp = mesg.header.stamp;
+        image_params_pubs[i].publish(params_msgs[i]);
+
     }
+    
     export_to_ROS_time_ = ros::Time::now().toSec()-t;;
 }
 
@@ -956,35 +1015,54 @@ void acquisition::Capture::get_mat_images() {
     
     int frameID;
     int fid_mismatch = 0;
-   
 
-    for (int i=0; i<numCameras_; i++) {
-        //ROS_INFO_STREAM("CAM ID IS "<< i);
+    // for (int i=0; i<numCameras_; i++) {
+    for (int i=numCameras_-1; i>=0; i--) { // query starting with last camera
+        // ROS_INFO_STREAM("CAM ID IS "<< i);
         frames_[i] = cams[i].grab_mat_frame();
         //ROS_INFO("sucess");
         time_stamps_[i] = cams[i].get_time_stamp();
 
+        // New
+        params_msgs[i].exposure_time_us = (int32_t) cams[i].get_exposure_time();
+        params_msgs[i].gain_dB = (double) cams[i].get_gain();
 
-        if (i==0)
+
+        // if (i==0)
+        if (i==(numCameras_-1))
             frameID = cams[i].get_frame_id();
         else
             if (cams[i].get_frame_id() != frameID)
                 fid_mismatch = 1;
         
-        if (i == numCameras_-1)
+        // if (i == numCameras_-1)
+        if (i == 0)
             ss << cams[i].get_frame_id() << "]";
         else
             ss << cams[i].get_frame_id() << ", ";
         
     }
     mesg.header.stamp = ros::Time::now();
-    mesg.time = ros::Time::now();
+    mesg.time = mesg.header.stamp;
     string message = ss.str();
-    ROS_DEBUG_STREAM(message);
 
-    if (fid_mismatch)
-        ROS_WARN_STREAM("Frame IDs for grabbed set of images did not match!");
-    
+    // ROS_DEBUG_STREAM(message);
+    // std::cout << message << std::endl;
+
+
+    // Debug timestamps
+    // std::string timestamp0_str(time_stamps_[0].begin(), time_stamps_[0].end());
+    // std::string timestamp1_str(time_stamps_[1].begin(), time_stamps_[1].end());
+    // float timestamp0 = std::stof(timestamp0_str);
+    // float timestamp1 = std::stof(timestamp1_str);
+    // std::cout << "Camera 1 vs 0 timestamps :" << timestamp1-timestamp0 << std::endl;
+
+    if (fid_mismatch){
+        ROS_ERROR_STREAM("Frame IDs for grabbed set of images did not match!");
+        std::cout << std::endl << "ERROR: Final frame IDs do not match!" << std::endl << "This probably means cameras were silently out of sync." << std::endl << message << std::endl << std::endl;
+        ros::shutdown();
+    }
+        
     toMat_time_ = ros::Time::now().toSec() - t;
     
 }
@@ -997,14 +1075,14 @@ void acquisition::Capture::run_soft_trig() {
 
     // Camera directories created at first save
     
-    if (LIVE_)namedWindow("Acquisition", CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO);
+    if (LIVE_)namedWindow("Acquisition", WINDOW_NORMAL | WINDOW_KEEPRATIO);
 
     int count = 0;
     
     if (!EXTERNAL_TRIGGER_) {
         cams[MASTER_CAM_].trigger();
     }
-    
+
     get_mat_images();
     if (SAVE_) {
         count++;
@@ -1046,7 +1124,7 @@ void acquisition::Capture::run_soft_trig() {
                 }
             }
 
-            int key = cvWaitKey(1);
+            int key = waitKey(1);
             ROS_DEBUG_STREAM("Key press: "<<(key & 255)<<endl);
             
             if ( (key & 255)!=255 ) {
@@ -1070,7 +1148,7 @@ void acquisition::Capture::run_soft_trig() {
                     }
                 } else if( (key & 255)==27 ) {  // ESC
                     ROS_INFO_STREAM("Terminating...");
-                    cvDestroyAllWindows();
+                    destroyAllWindows();
                     ros::shutdown();
                     break;
                 }
@@ -1085,7 +1163,7 @@ void acquisition::Capture::run_soft_trig() {
                 cams[MASTER_CAM_].trigger();
             }
             get_mat_images();
-
+            
             if (SAVE_) {
                 count++;
                 if (SAVE_BIN_)
@@ -1098,7 +1176,7 @@ void acquisition::Capture::run_soft_trig() {
                 ROS_INFO_STREAM(" Recorded frames "<<count<<" / "<<nframes_);
                 if (count > nframes_) {
                     ROS_INFO_STREAM(nframes_ << " frames recorded. Terminating...");
-                    cvDestroyAllWindows();
+                    destroyAllWindows();
                     break;
                 }
             }
@@ -1372,17 +1450,18 @@ std::string acquisition::Capture::todays_date()
 
 void acquisition::Capture::dynamicReconfigureCallback(spinnaker_sdk_camera_driver::spinnaker_camConfig &config, uint32_t level){
     
-    ROS_INFO_STREAM("Dynamic Reconfigure: Level : " << level);
+    // ROS_INFO_STREAM("Dynamic Reconfigure: Level : " << level);
     if(level == 1 || level ==3){
-        ROS_INFO_STREAM("Target grey value : " << config.target_grey_value);
+        // ROS_INFO_STREAM("Target grey value : " << config.target_grey_value);
         for (int i = numCameras_-1 ; i >=0 ; i--) {
             
-            cams[i].setEnumValue("AutoExposureTargetGreyValueAuto", "Off");
-            cams[i].setFloatValue("AutoExposureTargetGreyValue", config.target_grey_value);
+            cams[i].setEnumValue("AutoExposureTargetGreyValueAuto", "Off"); // Turns off automatic selection of target grey value
+            cams[i].setFloatValue("AutoExposureTargetGreyValue", config.target_grey_value); 
         }
     }
     if (level == 2 || level ==3){
-        ROS_INFO_STREAM("Exposure "<<config.exposure_time);
+        // ROS_INFO_STREAM("Exposure "<<config.exposure_time);
+        // ROS_INFO_STREAM("Gain "<<config.gain);
         if(config.exposure_time > 0){
             for (int i = numCameras_-1 ; i >=0 ; i--) {
 
@@ -1397,7 +1476,30 @@ void acquisition::Capture::dynamicReconfigureCallback(spinnaker_sdk_camera_drive
                 cams[i].setEnumValue("ExposureMode", "Timed");
             }
         }
+        if(config.gain > 0){
+            for (int i = numCameras_-1 ; i >=0 ; i--) {
+
+                cams[i].setEnumValue("GainAuto", "Off");
+                cams[i].setFloatValue("Gain", config.gain);
+            }
+        }
+        else if(config.gain ==0){
+            for (int i = numCameras_-1 ; i >=0 ; i--) {
+                cams[i].setEnumValue("GainAuto", "Continuous");
+            }
+        }
     }
+}
+
+void acquisition::Capture::commandParamsCallback(const spinnaker_sdk_camera_driver::SpinnakerImageParams::ConstPtr& msg){
+    // This whole operation takes about 2-3 ms
+    // std::cout << std::endl;
+    // std::cout << now_str() << '\n';
+    for (int i = numCameras_-1 ; i >=0 ; i--) {
+        cams[i].setFloatValue("ExposureTime", msg->exposure_time_us);
+        cams[i].setFloatValue("Gain", msg->gain_dB);
+    }
+    // std::cout << now_str() << '\n';
 }
 
 #ifdef trigger_msgs_FOUND
