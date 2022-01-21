@@ -9,7 +9,7 @@ This repository contains the source code of an auto-exposure algorithm for maxin
 This software reuses some of the code from [aer_auto_exposure_gradient](https://github.com/ishaanmht/aer_auto_exposure_gradient) developped by [Ishaan Mehta, Tang Mingliang, and Timothy D. Barfoot](https://ieeexplore.ieee.org/document/9108676/). 
 
 ## Example recordings
-In the orginial paper, the proposed algorithm is benchmarked against other exposure control methods. The ROS bag recordings of these experiments are available [here]().
+In the orginial paper, the proposed algorithm is benchmarked against other exposure control methods. The ROS bag recordings of these experiments are available [here](http://gofile.me/5n3cM/0069qGebj).
 
 ## Supplementary video
 A video showing the algorithm in action is available [here](https://www.youtube.com/watch?v=Guvhvb-uQpE) (or click the image below).
