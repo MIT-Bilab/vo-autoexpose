@@ -6,14 +6,15 @@
 
 This repository contains the source code of an auto-exposure algorithm for maxing out VO performance in challenging light conditions. A ROS wrapper is also provided for the algorithm and the whole repository is structured as a ROS package. The core algorithm library is however independant of ROS and can be reused directly.
 
-<!-- We provide examples to run ORB-SLAM3 in the [EuRoC dataset](http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets) using stereo or monocular, with or without IMU, and in the [TUM-VI dataset](https://vision.in.tum.de/data/datasets/visual-inertial-dataset) using fisheye stereo or monocular, with or without IMU. Videos of some example executions can be found at [ORB-SLAM3 channel](https://www.youtube.com/channel/UCXVt-kXG6T95Z4tVaYlU80Q). -->
-
 This software reuses some of the code from [aer_auto_exposure_gradient](https://github.com/ishaanmht/aer_auto_exposure_gradient) developped by [Ishaan Mehta, Tang Mingliang, and Timothy D. Barfoot](https://ieeexplore.ieee.org/document/9108676/). 
-<!-- This software is based on [ORB-SLAM2](https://github.com/raulmur/ORB_SLAM2) developed by [Raul Mur-Artal](http://webdiis.unizar.es/~raulmur/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/), [J. M. M. Montiel](http://webdiis.unizar.es/~josemari/) and [Dorian Galvez-Lopez](http://doriangalvez.com/) ([DBoW2](https://github.com/dorian3d/DBoW2)). -->
 
-<!-- TODO: Include a cool picture -->
-<!-- <a href="https://youtu.be/HyLNq-98LRo" target="_blank"><img src="https://img.youtube.com/vi/HyLNq-98LRo/0.jpg" 
-alt="ORB-SLAM3" width="240" height="180" border="10" /></a> -->
+## Example recordings
+In the orginial paper, the proposed algorithm is benchmarked against other exposure control methods. The ROS bag recordings of these experiments are available [here]().
+
+## Supplementary video
+A video showing the algorithm in action is available [here](https://www.youtube.com/watch?v=Guvhvb-uQpE) (or click the image below).
+
+[![Supplementary Video](VideoCapture.PNG)](https://www.youtube.com/watch?v=Guvhvb-uQpE "Supplementary Video")
 
 
 # 1. License
@@ -25,8 +26,8 @@ If you use this code in an academic work, please cite:
     @article{vo_autoexpose,
       title={Auto-Exposure Algorithm for Enhanced Mobile Robot Localization in Challenging Light Conditions},
       author={B\´egin, Marc-Andr\´e AND Other, Authors.},
-      journal={MDPI Sensors Journal},
-      year={2021}
+      journal={Sensors},
+      year={2022}
      }
 
 # 2. Prerequisites
