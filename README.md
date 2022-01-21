@@ -25,7 +25,7 @@ If you use this code in an academic work, please cite:
 
     @article{vo_autoexpose,
       title={Auto-Exposure Algorithm for Enhanced Mobile Robot Localization in Challenging Light Conditions},
-      author={B\´egin, Marc-Andr\´e AND Other, Authors.},
+      author={B\´egin, Marc-Andr\´e AND Hunter, Ian},
       journal={Sensors},
       year={2022}
      }
