@@ -40,7 +40,7 @@ We use the new thread and chrono functionalities of C++11. -->
 Dowload and installation instructions can be found at: http://opencv.org. **Requires at least 3.2.0 (default with ROS melodic installation)**.
 
 ## Eigen3
-Download and install instructions can be found at: http://eigen.tuxfamily.org. **Requires at least 3.1.0**.
+Download and install instructions can be found at: http://eigen.tuxfamily.org. **Requires at least 3.1.0. Tested with Eigen 3.3.4.**.
 
 ## ROS 
 The algorithm was tested with ROS Melodic. Follow download and installation instructions at: http://wiki.ros.org/melodic.
